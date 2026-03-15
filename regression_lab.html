@@ -1297,6 +1297,10 @@ function renderResults(data){
     const testSSEperN=(_testSSE/testY.length);
     const trainSSTperN=(result.SST/trainN);
     const testSSTperN=(_testSST/testY.length);
+    // Recompute train R² from scratch using stored yArr/yHat to verify result.R2
+    const _trainSSE=result.yArr.reduce((s,v,i)=>s+(v-result.yHat[i])**2,0);
+    const _trainSST=result.yArr.reduce((s,v)=>s+(v-result.yMean)**2,0);
+    const _trainR2=1-_trainSSE/_trainSST;
     tc.innerHTML=`<div class="test-result-row">
       <div class="test-metric"><div class="test-metric-label">TRAIN R²</div><div class="test-metric-value" style="color:var(--amber)">${result.R2.toFixed(4)}</div></div>
       <div class="test-metric"><div class="test-metric-label">VAL R²</div><div class="test-metric-value" style="color:var(--green)">${testR2.toFixed(4)}</div></div>
@@ -1306,8 +1310,9 @@ function renderResults(data){
     </div>
     <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);font-family:var(--font-m);font-size:10px;color:var(--text-3)">
       <span style="color:var(--text-2)">DIAGNOSTICS</span> &nbsp;·&nbsp;
-      SSE/n: train <span style="color:var(--amber)">${fmt(+trainSSEperN)}</span> vs val <span style="color:var(--green)">${fmt(+testSSEperN)}</span> &nbsp;·&nbsp;
-      SST/n: train <span style="color:var(--amber)">${fmt(+trainSSTperN)}</span> vs val <span style="color:var(--green)">${fmt(+testSSTperN)}</span> &nbsp;·&nbsp;
+      R² check: stored=<span style="color:var(--amber)">${result.R2.toFixed(6)}</span> recomputed=<span style="color:var(--amber)">${_trainR2.toFixed(6)}</span> match=<span style="color:${Math.abs(result.R2-_trainR2)<1e-9?'var(--green)':'var(--red)'}">${Math.abs(result.R2-_trainR2)<1e-9}</span> &nbsp;·&nbsp;
+      SSE/n: train <span style="color:var(--amber)">${fmt(trainSSEperN)}</span> vs val <span style="color:var(--green)">${fmt(testSSEperN)}</span> &nbsp;·&nbsp;
+      SST/n: train <span style="color:var(--amber)">${fmt(trainSSTperN)}</span> vs val <span style="color:var(--green)">${fmt(testSSTperN)}</span> &nbsp;·&nbsp;
       ȳ: train <span style="color:var(--amber)">${fmt(result.yMean)}</span> vs val <span style="color:var(--green)">${fmt(mean(testY))}</span>
     </div>`;
   } else {

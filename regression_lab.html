@@ -52,6 +52,8 @@ body {
   overflow-x: hidden;
   position: relative;
 }
+header { min-width: 0; }
+#app { overflow-x: hidden; }
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -150,9 +152,10 @@ main { flex: 1; padding: 28px 32px; }
   grid-template-columns: 360px 1fr;
   gap: 20px;
   align-items: start;
+  min-width: 0;
 }
-.model-left { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 20px; }
-.model-right { min-height: 300px; }
+.model-left { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 20px; min-width: 0; }
+.model-right { min-height: 300px; min-width: 0; overflow-x: hidden; }
 .model-right-empty {
   border: 1px dashed var(--border-hi);
   background: var(--surface);
@@ -209,7 +212,7 @@ tr:hover td { background: var(--surface-2); color: var(--text); }
 .stat-value { font-family: var(--font-m); font-size: 14px; color: var(--teal); }
 
 /* ── CORRELATION HEATMAP ── */
-#corr-wrap, .model-corr-wrap { overflow: auto; }
+#corr-wrap, .model-corr-wrap { overflow: auto; max-width: 100%; }
 .corr-table { border-collapse: collapse; }
 .corr-table th { font-family: var(--font-b); font-size: 12px; font-weight: 600; color: var(--text-2); padding: 6px 8px; white-space: nowrap; max-width: 100px; overflow: hidden; text-overflow: ellipsis; border: none; background: none; }
 .corr-table td { width: 62px; height: 52px; text-align: center; font-family: var(--font-m); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: 2px solid rgba(8,8,26,0.6); }
@@ -285,7 +288,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 .chart-title { font-family: var(--font-d); font-size: 10px; letter-spacing: 1px; color: var(--text-2); margin-bottom: 14px; }
 
 /* ── EQUATION ── */
-.equation-box { background: var(--surface-3); border: 1px solid var(--border-hi); border-left: 3px solid var(--amber); padding: 14px 20px; font-family: var(--font-m); font-size: 12px; color: var(--text); line-height: 1.7; overflow-x: auto; white-space: nowrap; }
+.equation-box { background: var(--surface-3); border: 1px solid var(--border-hi); border-left: 3px solid var(--amber); padding: 14px 20px; font-family: var(--font-m); font-size: 12px; color: var(--text); line-height: 1.7; overflow-x: auto; white-space: nowrap; max-width: 100%; }
 .eq-dep  { color: var(--amber); }
 .eq-coef { color: var(--teal); }
 
@@ -569,6 +572,10 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
     <!-- ── LEFT: CONTROLS ── -->
     <div class="model-left">
 
+      <button class="btn run-btn-active" id="run-btn" onclick="runRegression()" disabled style="width:100%;justify-content:center;padding:14px">
+        RUN REGRESSION ◈
+      </button>
+
       <div class="card amber" id="y-card">
         <div class="card-title"><span class="dot"></span>DEPENDENT VARIABLE (Y)</div>
         <!-- Expanded: chip list -->
@@ -626,10 +633,6 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
         </div>
         <div class="mt-16" id="model-ready-status"></div>
       </div>
-
-      <button class="btn run-btn-active" id="run-btn" onclick="runRegression()" disabled style="width:100%;justify-content:center;padding:14px">
-        RUN REGRESSION ◈
-      </button>
 
     </div>
 

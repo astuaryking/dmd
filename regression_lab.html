@@ -624,7 +624,10 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
         <div style="display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap">
           <div>
             <div class="section-label" style="margin-bottom:6px">RANDOM SEED</div>
-            <input type="number" id="seed-input" value="42" min="0" max="99999">
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" id="seed-input" value="42" min="0" max="99999">
+              <button onclick="document.getElementById('seed-input').value=Math.floor(Math.random()*99999)" style="background:var(--surface-2);border:1px solid var(--border-hi);color:var(--teal);font-family:var(--font-b);font-size:11px;padding:7px 10px;cursor:pointer;white-space:nowrap" title="Randomize seed">⚄ NEW</button>
+            </div>
           </div>
           <div style="margin-top:20px;display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="intercept-chk" checked style="accent-color:var(--amber);width:15px;height:15px;">
@@ -1201,7 +1204,7 @@ function runRegression(){
   const testR2=testY.length>0?1-testSSE/testSST:null;
   const testRMSE=testY.length>0?Math.sqrt(testSSE/testY.length):null;
   const name=document.getElementById('model-name-input').value.trim()||('Attempt '+(S.attempts.length+1));
-  S.lastResult={result,name,xvars,yvar:S.yVar,incInt,trainN:trainClean.length,testN:testClean.length,testR2,testRMSE,testY,testYhat,timestamp:new Date().toLocaleTimeString()};
+  S.lastResult={result,name,xvars,yvar:S.yVar,incInt,trainN:trainClean.length,testN:testClean.length,testR2,testRMSE,testY,testYhat,seed,timestamp:new Date().toLocaleTimeString()};
   renderResults(S.lastResult);
   unlockResultsTab();
   // scroll results panel into view
@@ -1228,7 +1231,7 @@ function renderResults(data){
 
   // Stats
   const sg=document.getElementById('model-stats-grid'); sg.innerHTML='';
-  [{label:'R²',val:result.R2.toFixed(4),cls:'',sub:'Variance explained (train)'},{label:'VAL R²',val:testR2!==null?testR2.toFixed(4):'—',cls:'green',sub:'Validation set R²'},{label:'ADJ R²',val:result.R2adj.toFixed(4),cls:'teal',sub:'Penalized for # vars'},{label:'RMSE',val:fmt(result.RMSE),cls:'',sub:'Train root mean sq error'},{label:'F-STAT',val:fmt(result.F),cls:'teal',sub:`p = ${pFmt(result.F_p)}`},{label:'AIC',val:fmt(result.AIC),cls:'',sub:'Lower is better'},{label:'N (TRAIN)',val:trainN,cls:'teal',sub:'Observations'},{label:'DF RES',val:result.df_res,cls:'',sub:'n − p'}].forEach(s=>sg.innerHTML+=`<div class="model-stat"><div class="model-stat-label">${s.label}</div><div class="model-stat-value ${s.cls}">${s.val}</div><div class="model-stat-sub">${s.sub}</div></div>`);
+  [{label:'R²',val:result.R2.toFixed(4),cls:'',sub:'Variance explained (train)'},{label:'VAL R²',val:testR2!==null?testR2.toFixed(4):'—',cls:'green',sub:'Validation set R²'},{label:'ADJ R²',val:result.R2adj.toFixed(4),cls:'teal',sub:'Penalized for # vars'},{label:'RMSE',val:fmt(result.RMSE),cls:'',sub:'Train root mean sq error'},{label:'F-STAT',val:fmt(result.F),cls:'teal',sub:`p = ${pFmt(result.F_p)}`},{label:'AIC',val:fmt(result.AIC),cls:'',sub:'Lower is better'},{label:'N (TRAIN)',val:trainN,cls:'teal',sub:'Observations'},{label:'DF RES',val:result.df_res,cls:'',sub:'n − p'},{label:'SEED',val:data.seed,cls:'',sub:'Split random seed'}].forEach(s=>sg.innerHTML+=`<div class="model-stat"><div class="model-stat-label">${s.label}</div><div class="model-stat-value ${s.cls}">${s.val}</div><div class="model-stat-sub">${s.sub}</div></div>`);
 
   // Correlation matrix for this model
   renderModelCorr(yvar, xvars);

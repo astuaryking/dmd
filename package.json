@@ -1,0 +1,12 @@
+{
+  "name": "regression-lab",
+  "version": "1.0.0",
+  "description": "Linear regression analysis tool for MIT Data, Models & Decisions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

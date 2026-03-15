@@ -100,6 +100,28 @@ main { flex: 1; padding: 28px 32px; }
 .tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+/* ── MODEL + RESULTS SPLIT LAYOUT ── */
+.model-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.model-left { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 20px; }
+.model-right { min-height: 300px; }
+.model-right-empty {
+  border: 1px dashed var(--border-hi);
+  background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 40px; text-align: center;
+  position: relative;
+}
+.model-right-empty::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--border-hi); }
+@media (max-width: 900px) {
+  .model-layout { grid-template-columns: 1fr; }
+  .model-left { position: static; }
+}
+
 /* ── CARDS ── */
 .card { background: var(--surface); border: 1px solid var(--border); padding: 20px 24px; position: relative; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--border-hi); }
@@ -388,8 +410,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
   <button class="tab-btn active" data-tab="data"><span class="tab-num">01</span><span class="tab-name">DATA</span></button>
   <button class="tab-btn tab-locked" data-tab="explore"  id="tab-explore-btn"><span class="tab-num">02</span><span class="tab-name">EXPLORE</span></button>
   <button class="tab-btn tab-locked" data-tab="model"    id="tab-model-btn"><span class="tab-num">03</span><span class="tab-name">MODEL</span></button>
-  <button class="tab-btn tab-locked" data-tab="results"  id="tab-results-btn"><span class="tab-num">04</span><span class="tab-name">RESULTS</span></button>
-  <button class="tab-btn tab-locked" data-tab="attempts" id="tab-attempts-btn"><span class="tab-num">05</span><span class="tab-name">ATTEMPTS</span></button>
+  <button class="tab-btn tab-locked" data-tab="attempts" id="tab-attempts-btn"><span class="tab-num">04</span><span class="tab-name">ATTEMPTS</span></button>
 </nav>
 
 <main>
@@ -452,27 +473,23 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
   </div>
 </section>
 
-<!-- ══════════ 03 MODEL ══════════ -->
+<!-- ══════════ 03 MODEL + RESULTS ══════════ -->
 <section class="tab-panel" id="panel-model">
-  <div class="grid-2 mb-16">
+  <div class="model-layout">
 
-    <!-- Y variable -->
-    <div class="card amber">
-      <div class="card-title"><span class="dot"></span>DEPENDENT VARIABLE (Y)</div>
-      <div class="var-section">
-        <div class="var-section-header">
-          <div class="section-label">Choose <span>one</span> response variable</div>
-        </div>
+    <!-- ── LEFT: CONTROLS ── -->
+    <div class="model-left">
+
+      <div class="card amber">
+        <div class="card-title"><span class="dot"></span>DEPENDENT VARIABLE (Y)</div>
+        <div class="section-label" style="margin-bottom:10px">Choose <span>one</span> response variable</div>
         <div class="var-list" id="y-var-list"></div>
       </div>
-    </div>
 
-    <!-- X variables -->
-    <div class="card teal">
-      <div class="card-title"><span class="dot teal"></span>INDEPENDENT VARIABLES (X)</div>
-      <div class="var-section">
-        <div class="var-section-header">
-          <div class="section-label">Select one or more <span class="teal">predictors</span></div>
+      <div class="card teal">
+        <div class="card-title"><span class="dot teal"></span>INDEPENDENT VARIABLES (X)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="section-label">Select <span class="teal">predictors</span></div>
           <div class="var-actions">
             <button class="var-action-btn" onclick="selectAllX()">ALL</button>
             <button class="var-action-btn" onclick="clearAllX()">NONE</button>
@@ -480,101 +497,88 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
         </div>
         <div class="var-list" id="x-var-list"></div>
       </div>
-      <div id="x-corr-hints" style="margin-top:12px;font-family:var(--font-m);font-size:9px;color:var(--text-3)"></div>
-    </div>
 
-  </div>
-
-  <div class="grid-2 mb-16">
-    <!-- Split config -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span>TRAIN / TEST SPLIT</div>
-      <div class="section-label" style="margin-bottom:8px">Hold out <span id="test-pct-label" style="color:var(--amber)">20%</span> of data for validation</div>
-      <div class="slider-wrap mt-8">
-        <input type="range" id="split-slider" min="10" max="40" value="20" step="5" oninput="updateSplitLabel(this.value)">
-        <div class="slider-labels">
-          <span>TRAIN <span class="slider-val" id="train-pct">80%</span></span>
-          <span>TEST <span class="slider-val" id="test-pct">20%</span></span>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>CONFIGURATION</div>
+        <div class="section-label" style="margin-bottom:6px">ATTEMPT NAME</div>
+        <input type="text" class="model-name-input" id="model-name-input" placeholder="Attempt 1" style="width:100%">
+        <div style="margin-top:16px">
+          <div class="section-label" style="margin-bottom:8px">TRAIN / TEST SPLIT — hold out <span id="test-pct-label" style="color:var(--amber)">20%</span></div>
+          <input type="range" id="split-slider" min="10" max="40" value="20" step="5" oninput="updateSplitLabel(this.value)">
+          <div class="slider-labels">
+            <span>TRAIN <span class="slider-val" id="train-pct">80%</span></span>
+            <span>TEST <span class="slider-val" id="test-pct">20%</span></span>
+          </div>
         </div>
-      </div>
-      <div class="seed-wrap mt-16">
-        <div class="section-label" style="margin-bottom:0">RANDOM SEED</div>
-        <input type="number" id="seed-input" value="42" min="0" max="99999">
-      </div>
-    </div>
-    <!-- Model config -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span>MODEL CONFIGURATION</div>
-      <div class="section-label" style="margin-bottom:8px">ATTEMPT NAME</div>
-      <input type="text" class="model-name-input" id="model-name-input" placeholder="Attempt 1">
-      <div class="mt-16">
-        <div class="section-label">INTERCEPT</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-          <input type="checkbox" id="intercept-chk" checked style="accent-color:var(--amber);width:16px;height:16px;">
-          <label for="intercept-chk" style="font-family:var(--font-m);font-size:11px;color:var(--text-2);cursor:pointer">Include intercept (β₀)</label>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap">
+          <div>
+            <div class="section-label" style="margin-bottom:6px">RANDOM SEED</div>
+            <input type="number" id="seed-input" value="42" min="0" max="99999">
+          </div>
+          <div style="margin-top:20px;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="intercept-chk" checked style="accent-color:var(--amber);width:15px;height:15px;">
+            <label for="intercept-chk" style="font-family:var(--font-b);font-size:13px;color:var(--text-2);cursor:pointer">Include intercept (β₀)</label>
+          </div>
         </div>
+        <div class="mt-16" id="model-ready-status"></div>
       </div>
-      <div class="mt-16" id="model-ready-status"></div>
-    </div>
-  </div>
 
-  <div style="display:flex;gap:12px;justify-content:flex-end">
-    <button class="btn ghost" onclick="goToTab('explore')">&larr; EXPLORE</button>
-    <button class="btn run-btn-active" id="run-btn" onclick="runRegression()" disabled>RUN REGRESSION ◈</button>
-  </div>
-</section>
+      <button class="btn run-btn-active" id="run-btn" onclick="runRegression()" disabled style="width:100%;justify-content:center;padding:14px">
+        RUN REGRESSION ◈
+      </button>
 
-<!-- ══════════ 04 RESULTS ══════════ -->
-<section class="tab-panel" id="panel-results">
-  <div id="results-empty" class="empty-state">
-    <div class="empty-icon">⌬</div>
-    <div class="empty-title">NO MODEL RUN YET</div>
-    <div class="empty-sub">Configure variables in tab 03 and run a regression</div>
-  </div>
-  <div id="results-content" style="display:none">
-
-    <!-- Equation -->
-    <div class="card amber mb-16">
-      <div class="card-title"><span class="dot"></span>REGRESSION EQUATION</div>
-      <div class="equation-box" id="equation-box"></div>
     </div>
 
-    <!-- Model stats -->
-    <div class="model-stats-grid mb-16" id="model-stats-grid"></div>
+    <!-- ── RIGHT: RESULTS ── -->
+    <div class="model-right">
 
-    <!-- Correlation matrix for this model's variables -->
-    <div class="card mb-16">
-      <div class="card-title"><span class="dot"></span>CORRELATION MATRIX <span style="color:var(--text-3);font-weight:400;font-size:8px;margin-left:8px" id="results-corr-label"></span></div>
-      <div class="model-corr-wrap corr-compact" id="results-corr-wrap"></div>
-    </div>
-
-    <!-- Coefficient table -->
-    <div class="card mb-16">
-      <div class="card-title"><span class="dot"></span>COEFFICIENT TABLE</div>
-      <div style="overflow-x:auto">
-        <table class="coef-table" id="coef-table"></table>
+      <div id="results-empty" class="model-right-empty">
+        <div style="font-size:36px;font-family:var(--font-m);color:var(--border-hi);margin-bottom:16px">⌬</div>
+        <div style="font-family:var(--font-d);font-size:11px;letter-spacing:2px;color:var(--text-2);margin-bottom:8px">AWAITING MODEL</div>
+        <div style="font-family:var(--font-b);font-size:13px;color:var(--text-3)">Select Y and X variables, then run the regression</div>
       </div>
-      <div class="sig-key mt-8">Significance: <span style="color:var(--amber)">***</span> p&lt;0.001 &nbsp;<span style="color:var(--amber)">**</span> p&lt;0.01 &nbsp;<span style="color:var(--amber-lo)">*</span> p&lt;0.05 &nbsp;<span style="color:var(--text-2)">.</span> p&lt;0.1</div>
+
+      <div id="results-content" style="display:none">
+
+        <div class="card amber mb-16">
+          <div class="card-title"><span class="dot"></span>REGRESSION EQUATION</div>
+          <div class="equation-box" id="equation-box"></div>
+        </div>
+
+        <div class="model-stats-grid mb-16" id="model-stats-grid"></div>
+
+        <div class="card mb-16">
+          <div class="card-title"><span class="dot"></span>CORRELATION MATRIX <span style="color:var(--text-3);font-weight:400;font-size:9px;margin-left:8px" id="results-corr-label"></span></div>
+          <div class="model-corr-wrap corr-compact" id="results-corr-wrap"></div>
+        </div>
+
+        <div class="card mb-16">
+          <div class="card-title"><span class="dot"></span>COEFFICIENT TABLE</div>
+          <div style="overflow-x:auto">
+            <table class="coef-table" id="coef-table"></table>
+          </div>
+          <div class="sig-key mt-8">Significance: <span style="color:var(--amber)">***</span> p&lt;0.001 &nbsp;<span style="color:var(--amber)">**</span> p&lt;0.01 &nbsp;<span style="color:var(--amber-lo)">*</span> p&lt;0.05 &nbsp;<span style="color:var(--text-2)">.</span> p&lt;0.1</div>
+        </div>
+
+        <div class="grid-2 mb-16">
+          <div class="chart-box"><div class="chart-title">RESIDUALS vs FITTED</div><div style="height:200px"><canvas id="resid-fitted-chart"></canvas></div></div>
+          <div class="chart-box"><div class="chart-title">RESIDUAL DISTRIBUTION</div><div style="height:200px"><canvas id="resid-hist-chart"></canvas></div></div>
+          <div class="chart-box"><div class="chart-title">ACTUAL vs PREDICTED</div><div style="height:200px"><canvas id="actual-pred-chart"></canvas></div></div>
+          <div class="chart-box"><div class="chart-title">Q-Q PLOT (RESIDUALS)</div><div style="height:200px"><canvas id="qq-chart"></canvas></div></div>
+        </div>
+
+        <div class="card teal mb-16">
+          <div class="card-title"><span class="dot teal"></span>VALIDATION SET PERFORMANCE</div>
+          <div id="test-results-content"></div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+          <button class="btn green" onclick="saveAttempt()">SAVE TO ATTEMPT LOG &rarr;</button>
+        </div>
+
+      </div>
     </div>
 
-    <!-- Residual charts -->
-    <div class="grid-2 mb-16">
-      <div class="chart-box"><div class="chart-title">RESIDUALS vs FITTED</div><div style="height:200px"><canvas id="resid-fitted-chart"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">RESIDUAL DISTRIBUTION</div><div style="height:200px"><canvas id="resid-hist-chart"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">ACTUAL vs PREDICTED</div><div style="height:200px"><canvas id="actual-pred-chart"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">Q-Q PLOT (RESIDUALS)</div><div style="height:200px"><canvas id="qq-chart"></canvas></div></div>
-    </div>
-
-    <!-- Test results -->
-    <div class="card teal mb-16">
-      <div class="card-title"><span class="dot teal"></span>VALIDATION SET PERFORMANCE</div>
-      <div id="test-results-content"></div>
-    </div>
-
-    <div style="display:flex;gap:12px;justify-content:flex-end">
-      <button class="btn ghost" onclick="goToTab('model')">&larr; MODIFY MODEL</button>
-      <button class="btn green" onclick="saveAttempt()">SAVE TO ATTEMPT LOG &rarr;</button>
-    </div>
   </div>
 </section>
 
@@ -722,7 +726,7 @@ function unlockTabs(){
   ['explore','model','attempts'].forEach(t=>{ const b=document.getElementById('tab-'+t+'-btn'); if(b) b.classList.remove('tab-locked'); });
 }
 function unlockResultsTab(){
-  ['results','attempts'].forEach(t=>{ const b=document.getElementById('tab-'+t+'-btn'); if(b) b.classList.remove('tab-locked'); });
+  ['model','attempts'].forEach(t=>{ const b=document.getElementById('tab-'+t+'-btn'); if(b) b.classList.remove('tab-locked'); });
 }
 
 // ═══════════════════════════ STATUS BAR ═══════════════════════════
@@ -835,13 +839,14 @@ function buildCorrMatrix(){
   renderCorrTable(nc,S.corrMatrix,'corr-wrap',true);
 }
 
-// Generic corr table renderer
+// Generic corr table renderer — lower triangle only (j <= i)
 // cols: array of column names, matrix: 2D array, containerId: where to render, clickable: bool
 function renderCorrTable(cols, matrix, containerId, clickable){
   const wrap=document.getElementById(containerId);
   if(!wrap) return;
   wrap.innerHTML='';
   const t=document.createElement('table'); t.className='corr-table';
+  // Column headers (only as many as needed for the lower triangle)
   const htr=document.createElement('tr'); htr.appendChild(document.createElement('th'));
   cols.forEach(c=>{ const th=document.createElement('th'); th.textContent=c.length>12?c.slice(0,12)+'…':c; th.title=c; htr.appendChild(th); });
   t.appendChild(htr);
@@ -850,14 +855,21 @@ function renderCorrTable(cols, matrix, containerId, clickable){
     const th=document.createElement('th'); th.textContent=row.length>12?row.slice(0,12)+'…':row; th.title=row; th.style.textAlign='right';
     tr.appendChild(th);
     cols.forEach((col,j)=>{
-      const r=matrix[i][j];
       const td=document.createElement('td');
-      td.textContent=r.toFixed(2);
-      td.style.background=corrColor(r);
-      td.style.color=Math.abs(r)>0.4?'#fff':'rgba(255,255,255,0.6)';
-      td.style.fontWeight=i===j?'700':'400';
-      td.title=`${row} × ${col}: r = ${r.toFixed(4)}`;
-      if(clickable) td.addEventListener('click',()=>plotScatter(cols[j],cols[i]));
+      if(j>i){
+        // Upper triangle — blank cell
+        td.style.background='var(--bg)';
+        td.style.border='none';
+        td.style.cursor='default';
+      } else {
+        const r=matrix[i][j];
+        td.textContent=r.toFixed(2);
+        td.style.background=corrColor(r);
+        td.style.color=Math.abs(r)>0.35?'#fff':'rgba(255,255,255,0.7)';
+        td.style.fontWeight=i===j?'700':'400';
+        td.title=i===j?col:`${row} × ${col}: r = ${r.toFixed(4)}`;
+        if(clickable && i!==j) td.addEventListener('click',()=>plotScatter(cols[j],cols[i]));
+      }
       tr.appendChild(td);
     });
     t.appendChild(tr);
@@ -989,7 +1001,8 @@ function runRegression(){
   S.lastResult={result,name,xvars,yvar:S.yVar,incInt,trainN:trainClean.length,testN:testClean.length,testR2,testRMSE,testY,testYhat,timestamp:new Date().toLocaleTimeString()};
   renderResults(S.lastResult);
   unlockResultsTab();
-  goToTab('results');
+  // scroll results panel into view
+  document.getElementById('results-content').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ═══════════════════════════ RENDER RESULTS ═══════════════════════════

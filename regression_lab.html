@@ -1290,12 +1290,22 @@ function renderResults(data){
   const tc=document.getElementById('test-results-content');
   if(testY.length>0&&testR2!==null){
     const diff=result.R2-testR2;
+    const trainSSEperN=(result.SSE/trainN).toFixed(2);
+    const testSSEperN=(testSSE/testY.length).toFixed(2);
+    const trainSSTperN=(result.SST/trainN).toFixed(2);
+    const testSSTperN=(testSST/testY.length).toFixed(2);
     tc.innerHTML=`<div class="test-result-row">
       <div class="test-metric"><div class="test-metric-label">TRAIN R²</div><div class="test-metric-value" style="color:var(--amber)">${result.R2.toFixed(4)}</div></div>
       <div class="test-metric"><div class="test-metric-label">VAL R²</div><div class="test-metric-value" style="color:var(--green)">${testR2.toFixed(4)}</div></div>
       <div class="test-metric"><div class="test-metric-label">VAL RMSE</div><div class="test-metric-value" style="color:var(--teal)">${fmt(testRMSE)}</div></div>
       <div class="test-metric"><div class="test-metric-label">OVERFIT GAP</div><div class="test-metric-value" style="color:${diff<0.05?'var(--green)':diff<0.15?'var(--amber)':'var(--red)'}">${diff.toFixed(4)}</div></div>
       <div class="test-metric"><div class="test-metric-label">GENERALIZATION</div><div class="test-metric-value" style="color:${genColor(result.R2,testR2)}">${genLabel(result.R2,testR2)}</div></div>
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);font-family:var(--font-m);font-size:10px;color:var(--text-3)">
+      <span style="color:var(--text-2)">DIAGNOSTICS</span> &nbsp;·&nbsp;
+      SSE/n: train <span style="color:var(--amber)">${fmt(+trainSSEperN)}</span> vs val <span style="color:var(--green)">${fmt(+testSSEperN)}</span> &nbsp;·&nbsp;
+      SST/n: train <span style="color:var(--amber)">${fmt(+trainSSTperN)}</span> vs val <span style="color:var(--green)">${fmt(+testSSTperN)}</span> &nbsp;·&nbsp;
+      ȳ: train <span style="color:var(--amber)">${fmt(result.yMean)}</span> vs val <span style="color:var(--green)">${fmt(mean(testY))}</span>
     </div>`;
   } else {
     tc.innerHTML='<div style="color:var(--text-3);font-family:var(--font-m);font-size:11px">No test observations after filtering for complete cases.</div>';

@@ -792,6 +792,7 @@ function olsFit(rows, xVars, yVar, incInt){
   const df_res=n-p, df_mod=incInt?k:p;
   const MSE=SSE/df_res, MSR=SSR/df_mod;
   const s2=MSE, s=Math.sqrt(s2);
+  const RMSE=Math.sqrt(SSE/n);
   const R2=SST===0?0:1-SSE/SST;
   const R2adj=SST===0?0:1-(SSE/df_res)/(SST/(n-1));
   const F=MSR/MSE;
@@ -804,7 +805,7 @@ function olsFit(rows, xVars, yVar, incInt){
   const names=[]; if(incInt) names.push('(Intercept)'); xVars.forEach(v=>names.push(v));
   const AIC=n*Math.log(SSE/n)+2*(p+1);
   const BIC=n*Math.log(SSE/n)+Math.log(n)*(p+1);
-  return { beta,names,n,k,p,df_res,df_mod,SSE,SST,SSR,MSE,MSR,RMSE:s,R2,R2adj,F,F_p,AIC,BIC,varBeta,tStats,pVals,ci,yArr,yHat,resid,yMean };
+  return { beta,names,n,k,p,df_res,df_mod,SSE,SST,SSR,MSE,MSR,RMSE,R2,R2adj,F,F_p,AIC,BIC,varBeta,tStats,pVals,ci,yArr,yHat,resid,yMean };
 }
 
 function predict(rows,xVars,beta,incInt){
@@ -1196,7 +1197,7 @@ function runRegression(){
   const testYhat=testClean.length>0?predict(testClean,xvars,result.beta,incInt):[];
   const testY=testClean.map(r=>+r[S.yVar]);
   const testSSE=testY.reduce((s,v,i)=>s+(v-testYhat[i])**2,0);
-  const testSST=testY.length>0?testY.reduce((s,v)=>s+(v-result.yMean)**2,0):1;
+  const testSST=testY.length>0?testY.reduce((s,v)=>s+(v-mean(testY))**2,0):1;
   const testR2=testY.length>0?1-testSSE/testSST:null;
   const testRMSE=testY.length>0?Math.sqrt(testSSE/testY.length):null;
   const name=document.getElementById('model-name-input').value.trim()||('Attempt '+(S.attempts.length+1));

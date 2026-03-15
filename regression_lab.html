@@ -100,6 +100,50 @@ main { flex: 1; padding: 28px 32px; }
 .tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+/* ── SPLIT MODE TOGGLE (Data tab) ── */
+.split-mode-toggle { display: flex; gap: 0; margin-bottom: 20px; }
+.split-mode-btn {
+  flex: 1; padding: 12px 20px; border: 1px solid var(--border-hi);
+  background: var(--surface-2); color: var(--text-2);
+  font-family: var(--font-d); font-size: 10px; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.split-mode-btn:first-child { border-right: none; }
+.split-mode-btn.active { background: var(--amber-glow); border-color: var(--amber); color: var(--amber); }
+.split-mode-btn.active.teal-mode { background: var(--teal-glow); border-color: var(--teal); color: var(--teal); }
+.upload-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.upload-zone-label { font-family: var(--font-d); font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; }
+.upload-zone-label.amber { color: var(--amber); }
+.upload-zone-label.teal  { color: var(--teal); }
+.dropzone-sm {
+  border: 2px dashed var(--border-hi); background: var(--surface-2);
+  padding: 28px 20px; text-align: center; cursor: pointer;
+  transition: all 0.25s; position: relative; overflow: hidden;
+}
+.dropzone-sm::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--amber-glow) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; }
+.dropzone-sm.teal-zone::before { background: radial-gradient(ellipse at center, var(--teal-glow) 0%, transparent 70%); }
+.dropzone-sm:hover::before, .dropzone-sm.drag-over::before { opacity: 1; }
+.dropzone-sm:hover, .dropzone-sm.drag-over { border-color: var(--amber); }
+.dropzone-sm.teal-zone:hover, .dropzone-sm.teal-zone.drag-over { border-color: var(--teal); }
+.dropzone-sm-icon { font-size: 24px; font-family: var(--font-m); color: var(--amber); opacity: 0.6; margin-bottom: 8px; }
+.dropzone-sm.teal-zone .dropzone-sm-icon { color: var(--teal); }
+.dropzone-sm-title { font-family: var(--font-d); font-size: 10px; letter-spacing: 2px; color: var(--text); margin-bottom: 4px; }
+.dropzone-sm-sub { font-family: var(--font-b); font-size: 12px; color: var(--text-3); }
+
+/* ── COLLAPSED Y CARD ── */
+.y-collapsed-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--amber-glow); border: 1px solid var(--amber-lo);
+  padding: 10px 14px;
+}
+.y-collapsed-value { font-family: var(--font-m); font-size: 14px; color: var(--amber); }
+.y-change-btn {
+  padding: 4px 12px; font-family: var(--font-d); font-size: 9px; letter-spacing: 1px;
+  background: none; border: 1px solid var(--amber-lo); color: var(--text-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.y-change-btn:hover { border-color: var(--amber); color: var(--amber); }
+
 /* ── MODEL + RESULTS SPLIT LAYOUT ── */
 .model-layout {
   display: grid;
@@ -418,16 +462,61 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
 <!-- ══════════ 01 DATA ══════════ -->
 <section class="tab-panel active" id="panel-data">
   <div class="card amber mb-16">
-    <div class="card-title"><span class="dot"></span>UPLOAD DATASET</div>
-    <div id="dropzone" onclick="document.getElementById('file-input').click()">
-      <div class="dropzone-icon">⌬</div>
-      <div class="dropzone-title">DROP CSV FILE HERE</div>
-      <div class="dropzone-sub">or click to browse &nbsp;·&nbsp; UTF-8 encoded &nbsp;·&nbsp; first row = headers</div>
-      <input type="file" id="file-input" accept=".csv,.tsv,.txt">
+    <div class="card-title"><span class="dot"></span>DATA SOURCE</div>
+
+    <!-- Split mode toggle -->
+    <div class="split-mode-toggle">
+      <button class="split-mode-btn active" id="mode-btn-auto" onclick="setSplitMode('auto')">
+        SPLIT FOR ME &nbsp;·&nbsp; upload one file, system holds out validation data
+      </button>
+      <button class="split-mode-btn" id="mode-btn-manual" onclick="setSplitMode('manual')">
+        PRE-SPLIT &nbsp;·&nbsp; I already have separate train &amp; validation files
+      </button>
     </div>
-    <div class="mt-16" id="file-info" style="display:none">
-      <div class="notice teal" id="file-notice"></div>
+
+    <!-- AUTO mode: single upload -->
+    <div id="upload-auto">
+      <div id="dropzone" onclick="document.getElementById('file-input').click()">
+        <div class="dropzone-icon">⌬</div>
+        <div class="dropzone-title">DROP CSV FILE HERE</div>
+        <div class="dropzone-sub">or click to browse &nbsp;·&nbsp; UTF-8 encoded &nbsp;·&nbsp; first row = headers</div>
+        <input type="file" id="file-input" accept=".csv,.tsv,.txt">
+      </div>
+      <div class="mt-16" id="file-info" style="display:none">
+        <div class="notice teal" id="file-notice"></div>
+      </div>
     </div>
+
+    <!-- MANUAL mode: two uploads -->
+    <div id="upload-manual" style="display:none">
+      <div class="upload-pair">
+        <div>
+          <div class="upload-zone-label amber">TRAINING DATA</div>
+          <div class="dropzone-sm" id="dz-train" onclick="document.getElementById('file-train').click()">
+            <div class="dropzone-sm-icon">⌬</div>
+            <div class="dropzone-sm-title">DROP TRAINING CSV</div>
+            <div class="dropzone-sm-sub">Used to fit the model</div>
+            <input type="file" id="file-train" accept=".csv,.tsv,.txt" style="display:none">
+          </div>
+          <div class="mt-8" id="train-file-info" style="display:none">
+            <div class="notice teal" id="train-file-notice"></div>
+          </div>
+        </div>
+        <div>
+          <div class="upload-zone-label teal">VALIDATION DATA</div>
+          <div class="dropzone-sm teal-zone" id="dz-val" onclick="document.getElementById('file-val').click()">
+            <div class="dropzone-sm-icon">◈</div>
+            <div class="dropzone-sm-title">DROP VALIDATION CSV</div>
+            <div class="dropzone-sm-sub">Used to evaluate the model</div>
+            <input type="file" id="file-val" accept=".csv,.tsv,.txt" style="display:none">
+          </div>
+          <div class="mt-8" id="val-file-info" style="display:none">
+            <div class="notice teal" id="val-file-notice"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
   <div id="data-preview-section" style="display:none">
     <div class="grid-2 mb-16">
@@ -480,10 +569,20 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
     <!-- ── LEFT: CONTROLS ── -->
     <div class="model-left">
 
-      <div class="card amber">
+      <div class="card amber" id="y-card">
         <div class="card-title"><span class="dot"></span>DEPENDENT VARIABLE (Y)</div>
-        <div class="section-label" style="margin-bottom:10px">Choose <span>one</span> response variable</div>
-        <div class="var-list" id="y-var-list"></div>
+        <!-- Expanded: chip list -->
+        <div id="y-card-expanded">
+          <div class="section-label" style="margin-bottom:10px">Choose <span>one</span> response variable</div>
+          <div class="var-list" id="y-var-list"></div>
+        </div>
+        <!-- Collapsed: summary row -->
+        <div id="y-card-collapsed" style="display:none">
+          <div class="y-collapsed-row">
+            <div class="y-collapsed-value" id="y-collapsed-label"></div>
+            <button class="y-change-btn" onclick="expandYCard()">CHANGE</button>
+          </div>
+        </div>
       </div>
 
       <div class="card teal">
@@ -502,13 +601,18 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
         <div class="card-title"><span class="dot"></span>CONFIGURATION</div>
         <div class="section-label" style="margin-bottom:6px">ATTEMPT NAME</div>
         <input type="text" class="model-name-input" id="model-name-input" placeholder="Attempt 1" style="width:100%">
-        <div style="margin-top:16px">
-          <div class="section-label" style="margin-bottom:8px">TRAIN / TEST SPLIT — hold out <span id="test-pct-label" style="color:var(--amber)">20%</span></div>
+        <!-- AUTO split slider -->
+        <div id="split-slider-wrap" style="margin-top:16px">
+          <div class="section-label" style="margin-bottom:8px">VALIDATION SPLIT — hold out <span id="test-pct-label" style="color:var(--amber)">20%</span></div>
           <input type="range" id="split-slider" min="10" max="40" value="20" step="5" oninput="updateSplitLabel(this.value)">
           <div class="slider-labels">
             <span>TRAIN <span class="slider-val" id="train-pct">80%</span></span>
-            <span>TEST <span class="slider-val" id="test-pct">20%</span></span>
+            <span>VAL <span class="slider-val" id="test-pct">20%</span></span>
           </div>
+        </div>
+        <!-- MANUAL split notice -->
+        <div id="split-manual-notice" style="display:none;margin-top:16px">
+          <div class="notice teal" style="font-size:12px">Using pre-uploaded validation file for evaluation</div>
         </div>
         <div style="display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap">
           <div>
@@ -616,7 +720,10 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--teal); }
 // ═══════════════════════════ STATE ═══════════════════════════
 const S = {
   raw: [], cols: [], numCols: [],
+  valRaw: [],                   // pre-split validation data (manual mode)
+  splitMode: 'auto',            // 'auto' | 'manual'
   yVar: null, xVars: [],
+  yCollapsed: false,
   trainData: [], testData: [],
   splitPct: 20, seed: 42,
   lastResult: null,
@@ -709,17 +816,47 @@ function seededShuffle(arr,seed){
 }
 
 // ═══════════════════════════ CSV ═══════════════════════════
-function loadCSV(text){
+function parseCSV(text){
   const res=Papa.parse(text,{header:true,dynamicTyping:false,skipEmptyLines:true});
   if(!res.data||res.data.length===0) throw new Error('No data rows found');
+  return res;
+}
+
+function loadCSV(text){
+  const res=parseCSV(text);
   S.raw=res.data;
   S.cols=res.meta.fields||Object.keys(res.data[0]);
   S.numCols=S.cols.filter(c=>res.data.every(r=>r[c]!==''&&r[c]!==null&&!isNaN(+r[c])));
-  S.corrMatrix=null; S.yVar=null; S.xVars=[];
+  S.corrMatrix=null; S.yVar=null; S.xVars=[]; S.yCollapsed=false;
   updateStatus();
   renderDataTab();
   buildCorrMatrix();
   unlockTabs();
+}
+
+function loadValCSV(text){
+  const res=parseCSV(text);
+  S.valRaw=res.data;
+  // validate columns match
+  const valCols=res.meta.fields||Object.keys(res.data[0]);
+  const missing=S.cols.filter(c=>!valCols.includes(c));
+  if(missing.length>0) console.warn('Validation file missing columns: '+missing.join(', '));
+  updateSplitStatus();
+}
+
+// ═══════════════════════════ SPLIT MODE ═══════════════════════════
+function setSplitMode(mode){
+  S.splitMode=mode;
+  document.getElementById('mode-btn-auto').classList.toggle('active', mode==='auto');
+  document.getElementById('mode-btn-manual').classList.toggle('active', mode==='manual');
+  document.getElementById('upload-auto').style.display=mode==='auto'?'block':'none';
+  document.getElementById('upload-manual').style.display=mode==='manual'?'block':'none';
+  // Show/hide slider vs notice in model tab
+  const sw=document.getElementById('split-slider-wrap');
+  const mn=document.getElementById('split-manual-notice');
+  if(sw) sw.style.display=mode==='auto'?'block':'none';
+  if(mn) mn.style.display=mode==='manual'?'block':'none';
+  updateSplitStatus();
 }
 
 function unlockTabs(){
@@ -735,8 +872,16 @@ function updateStatus(){
   setText('st-vars',S.cols.length+'\u00a0VARS'); markActive('st-vars');
 }
 function updateSplitStatus(){
-  const n=S.raw.length, test=Math.round(n*S.splitPct/100);
-  setText('st-split',(n-test)+'/'+ test+'\u00a0SPLIT'); markActive('st-split');
+  if(S.splitMode==='manual'){
+    if(S.raw.length>0&&S.valRaw.length>0){
+      setText('st-split',S.raw.length+'/'+S.valRaw.length+'\u00a0SPLIT'); markActive('st-split');
+    } else {
+      setText('st-split','PRE-SPLIT');
+    }
+  } else {
+    const n=S.raw.length, test=Math.round(n*S.splitPct/100);
+    setText('st-split',(n-test)+'/'+ test+'\u00a0SPLIT'); markActive('st-split');
+  }
 }
 function updateAttemptCount(){
   setText('st-models',S.attempts.length+'\u00a0ATTEMPTS');
@@ -754,24 +899,51 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{ if(!btn.classList.contains('tab-locked')) goToTab(btn.dataset.tab); });
 });
 
-// ═══════════════════════════ DROPZONE ═══════════════════════════
-const dz=document.getElementById('dropzone');
-dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f) readFile(f); });
-document.getElementById('file-input').addEventListener('change',e=>{ if(e.target.files[0]) readFile(e.target.files[0]); });
+// ═══════════════════════════ DROPZONES ═══════════════════════════
+function makeDZ(dzId, inputId, onFile){
+  const dz=document.getElementById(dzId);
+  if(!dz) return;
+  dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f) onFile(f); });
+  const inp=document.getElementById(inputId);
+  if(inp) inp.addEventListener('change',e=>{ if(e.target.files[0]) onFile(e.target.files[0]); });
+}
 
-function readFile(file){
+function readAndRun(file, loader, noticeId, infoId, extraLabel){
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
-      loadCSV(ev.target.result);
-      document.getElementById('file-info').style.display='block';
-      document.getElementById('file-notice').textContent='✓  '+file.name+'  ·  '+S.raw.length+' rows  ·  '+S.cols.length+' columns  ·  '+S.numCols.length+' numeric';
+      loader(ev.target.result);
+      if(infoId) document.getElementById(infoId).style.display='block';
+      if(noticeId) document.getElementById(noticeId).textContent='✓  '+file.name+(extraLabel||('  ·  '+S.raw.length+' rows  ·  '+S.cols.length+' cols'));
     }catch(err){ alert('Parse error: '+err.message); }
   };
   reader.readAsText(file);
 }
+
+makeDZ('dropzone','file-input', f=>readAndRun(f, loadCSV, 'file-notice','file-info'));
+makeDZ('dz-train','file-train', f=>readAndRun(f, loadCSV, 'train-file-notice','train-file-info'));
+
+// Val dropzone — needs row count after load so handle separately
+function readValFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      loadValCSV(ev.target.result);
+      document.getElementById('val-file-info').style.display='block';
+      document.getElementById('val-file-notice').textContent='✓  '+file.name+'  ·  '+S.valRaw.length+' rows (validation)';
+    }catch(err){ alert('Parse error: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+const dzVal=document.getElementById('dz-val');
+if(dzVal){
+  dzVal.addEventListener('dragover',e=>{ e.preventDefault(); dzVal.classList.add('drag-over'); });
+  dzVal.addEventListener('dragleave',()=>dzVal.classList.remove('drag-over'));
+  dzVal.addEventListener('drop',e=>{ e.preventDefault(); dzVal.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f) readValFile(f); });
+}
+document.getElementById('file-val').addEventListener('change',e=>{ if(e.target.files[0]) readValFile(e.target.files[0]); });
 
 // ═══════════════════════════ DATA TAB ═══════════════════════════
 function renderDataTab(){
@@ -940,9 +1112,30 @@ function renderVarSelectors(){
 
 function toggleY(col){
   S.yVar=S.yVar===col?null:col;
-  // Remove from X if present
   S.xVars=S.xVars.filter(v=>v!==col);
+  if(S.yVar) S.yCollapsed=true;
   renderVarSelectors();
+  renderYCard();
+}
+
+function expandYCard(){
+  S.yCollapsed=false;
+  renderYCard();
+}
+
+function renderYCard(){
+  const exp=document.getElementById('y-card-expanded');
+  const col=document.getElementById('y-card-collapsed');
+  const lbl=document.getElementById('y-collapsed-label');
+  if(!exp||!col) return;
+  if(S.yCollapsed&&S.yVar){
+    exp.style.display='none';
+    col.style.display='block';
+    lbl.textContent=S.yVar;
+  } else {
+    exp.style.display='block';
+    col.style.display='none';
+  }
 }
 function toggleX(col){
   if(col===S.yVar) return;
@@ -981,10 +1174,16 @@ function runRegression(){
   const seed=+(document.getElementById('seed-input').value)||42;
   S.seed=seed;
   const incInt=document.getElementById('intercept-chk').checked;
-  const shuffled=seededShuffle(S.raw,seed);
-  const testN=Math.round(shuffled.length*S.splitPct/100);
-  S.testData=shuffled.slice(0,testN);
-  S.trainData=shuffled.slice(testN);
+  if(S.splitMode==='manual'){
+    if(!S.valRaw.length){ alert('Please upload a validation file on the Data tab first.'); return; }
+    S.trainData=S.raw;
+    S.testData=S.valRaw;
+  } else {
+    const shuffled=seededShuffle(S.raw,seed);
+    const testN=Math.round(shuffled.length*S.splitPct/100);
+    S.testData=shuffled.slice(0,testN);
+    S.trainData=shuffled.slice(testN);
+  }
   updateSplitStatus();
   const cols=[S.yVar,...xvars];
   const trainClean=S.trainData.filter(r=>cols.every(c=>r[c]!==''&&r[c]!==null&&!isNaN(+r[c])));

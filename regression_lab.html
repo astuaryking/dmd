@@ -1203,6 +1203,18 @@ function runRegression(){
   const testSST=testY.length>0?testY.reduce((s,v)=>s+(v-mean(testY))**2,0):1;
   const testR2=testY.length>0?1-testSSE/testSST:null;
   const testRMSE=testY.length>0?Math.sqrt(testSSE/testY.length):null;
+  // DEBUG — open browser console to inspect
+  console.table({
+    'n_train_raw': S.trainData.length, 'n_train_clean': trainClean.length,
+    'n_test_raw': S.testData.length,   'n_test_clean': testClean.length,
+    'y_mean_train': result.yMean.toFixed(2),
+    'y_mean_test': testY.length>0?mean(testY).toFixed(2):'—',
+    'SSE_train': result.SSE.toFixed(0), 'SST_train': result.SST.toFixed(0),
+    'SSE_test': testSSE.toFixed(0),     'SST_test': testSST.toFixed(0),
+    'train_R2': result.R2.toFixed(6),   'val_R2': testR2!==null?testR2.toFixed(6):'—',
+    'SSE_train/n': (result.SSE/trainClean.length).toFixed(0),
+    'SSE_test/n':  (testSSE/testClean.length).toFixed(0),
+  });
   const name=document.getElementById('model-name-input').value.trim()||('Attempt '+(S.attempts.length+1));
   S.lastResult={result,name,xvars,yvar:S.yVar,incInt,trainN:trainClean.length,testN:testClean.length,testR2,testRMSE,testY,testYhat,seed,timestamp:new Date().toLocaleTimeString()};
   renderResults(S.lastResult);
